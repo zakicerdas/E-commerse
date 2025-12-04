@@ -1,21 +1,8 @@
 GET http://localhost:5000/:
 
 {
-    "success": true,
-    "message": "Welcome to the E-commerce API",
-    "data": {
-        "hari": 3,
-        "status": "success",
-        "responseTime": "0ms",
-        "note": "Gunakan header X-API-Key: 12345 untuk mengakses API",
-        "available_categories": [
-            "Electronics",
-            "Books",
-            "Clothing",
-            "Home",
-            "Sports"
-        ]
-    }
+    "message": "Halo pemilik API Key: 12345! Hari 5 – MVC E-Commerce + Service",
+    "waktu_proses": "0ms"
 }
 
 GET http://localhost:5000/api/products:
