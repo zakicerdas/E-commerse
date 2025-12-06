@@ -24,19 +24,22 @@ export const validate = (validations: ValidationChain[]) => {
 export const createProductValidation = [
   body('name')
     .trim()
-    .notEmpty().withMessage('Nama produk wajib diisi')
-    .isLength({ min: 3 }).withMessage('Nama produk minimal 3 karakter'),
+    .notEmpty().withMessage('Product name must be provided')
+    .isLength({ min: 3 }).withMessage('product name must be at least 3 characters long'),
   
   body('description')
     .trim()
-    .notEmpty().withMessage('Deskripsi wajib diisi'),
+    .notEmpty().withMessage('Description must be provided'),
   
   body('price')
-    .isNumeric().withMessage('Harga harus angka')
-    .custom(value => value > 0).withMessage('Harga harus lebih dari 0')
+    .isNumeric().withMessage('Price must be a number')
+    .custom(value => value > 0).withMessage('Price must be greater than zero'),
+  
+  body('stock')
+    .isInt({ min: 0 }).withMessage('Stock must be a non-negative integer')
 ];
 
 const getProductByIdValidation = [
   param('id')
-    .isNumeric().withMessage('ID harus angka')
+    .isNumeric().withMessage('ID must be a number')
 ];
