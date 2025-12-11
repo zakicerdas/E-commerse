@@ -1,60 +1,73 @@
-import { Product, products } from "../models/product.model";
+import  prisma  from '../prisma';
+import type { Product } from '../generated/client';
 
-export class ProductService {
-    static getAllProducts(): Product[] {
-        return products;
-    }
-    static getProductById(id: number): Product | undefined {
-        const product = products.find(p => p.id === id);
-        if (!product) throw new Error('Product not found');
-        return product;
-        
-    }
 
-    static createProduct (data: {name: string; description: string; price: number; category: string; }): Product {
-        const newProduct: Product = {
-            id: products.length + 1,
-            ...data
-        };
-        products.push(newProduct);
-        return newProduct;
-    }
 
-    static updateProduct(id: number, data: Partial<Product>): Product {
-        const index = products.findIndex(p => p.id === id);
-        if (index === -1) {
-            throw new Error('Product not found');
-        }
-        products[index] = { ...products[index], ...data };
-        return products[index];
-    }
 
-    static deleteProduct(id: number): void {
-        const index = products.findIndex(p => p.id === id);
-        if (index === -1) {
-            throw new Error('Product not found');
-        }
-        products.splice(index, 1);
-    }
 
-static searchProducts(name?: string, maxPrice?: number, category?: string): Product[] {
-    let filteredProducts = products;
 
-    if (name) {
-        filteredProducts = filteredProducts.filter(p => 
-            p.name.toLowerCase().includes(name.toLowerCase())
-        );
+export const getAllProducts = async () => {
+  return await prisma.product.findMany({
+    include: {
+      category: true 
     }
-    if (maxPrice !== undefined) {
-        filteredProducts = filteredProducts.filter(p => 
-            p.price <= maxPrice 
-        );
-    }
-    if (category) {
-        filteredProducts = filteredProducts.filter(p => 
-            p.category?.toLowerCase() === category.toLowerCase()
-        );
-    }
-    return filteredProducts;
-}
-}
+  });
+};
+
+export const getProductById = async (id: number): Promise<Product> => {
+  const product = await prisma.product.findUnique({
+    where: { id },
+  });
+  
+  if (!product) {
+    throw new Error('Product not found');
+  }
+  
+  return product;
+};
+
+export const createProduct = async (data: { 
+  name: string; 
+  price: number; 
+  stock: number;
+  description?: string;
+  categoryId?: number; 
+}): Promise<Product> => {
+  return await prisma.product.create({
+    data: {
+      name: data.name,
+      description: data.description ?? null,
+      price: data.price,
+      stock: data.stock,
+      categoryId: data.categoryId ?? null,
+    },
+  });
+};
+
+export const updateProduct = async (id: number, data: Partial<Product>): Promise<Product> => {
+  await getProductById(id); // Cek existance
+
+  return await prisma.product.update({
+    where: { id },
+    data,
+  });
+};
+
+export const deleteProduct = async (id: number): Promise<Product> => {
+  await getProductById(id); // Cek existance
+
+  return await prisma.product.delete({
+    where: { id },
+  });
+};
+
+export const searchProducts = async (name?: string, maxPrice?: number): Promise<Product[]> => {
+  let result = await getAllProducts();
+  if (name) {
+    result = result.filter(p => p.name.toLowerCase().includes(name.toLowerCase()));
+  }
+  if (maxPrice) {
+    result = result.filter(p => p.price.toNumber() <= maxPrice);
+  }
+  return result;
+};

@@ -1,10 +1,10 @@
-import { Request } from "express";
+import { Request } from 'express';
 
 declare global {
-    namespace Express {
-        interface Request {
-            startTime?: number; 
-            apiKey?: string;    
-        }
+  namespace Express {
+    interface Request {
+      startTime?: number;
+      apiKey?: string;
     }
+  }
 }
