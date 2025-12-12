@@ -31,7 +31,8 @@ export const createProduct = async (data: {
   price: number; 
   stock: number;
   description?: string;
-  categoryId?: number; 
+  categoryId?: number;
+  storeId?: number; 
 }): Promise<Product> => {
   return await prisma.product.create({
     data: {
@@ -40,6 +41,7 @@ export const createProduct = async (data: {
       price: data.price,
       stock: data.stock,
       categoryId: data.categoryId ?? null,
+      storeId: data.storeId ?? null,
     },
   });
 };

@@ -5,6 +5,7 @@ import cors from 'cors';
 import productRoutes from './routes/product.route';
 import { errorHandler } from './middlewares/error.handler';
 import categoryRoutes from './routes/category.route';
+import storeRoutes from './routes/store.route';
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', categoryRoutes);
+app.use('/api/v1', storeRoutes);
 
 // Error handler harus di paling bawah!
 // Middleware error handling dengan 4 parameter (`err, req, res, next`) harus selalu 
