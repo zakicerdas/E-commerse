@@ -1,9 +1,10 @@
 model Category {
-  id        Int       @id @default(autoincrement())
+    id      String    @id @default(uuid())
   name      String    @unique
   products  Product[] // Relasi balik: 1 Kategori -> Banyak Produk
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?  
 
   @@map("categories")
 }

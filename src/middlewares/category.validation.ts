@@ -30,5 +30,5 @@ export const createCategoryValidation = [
 
 export const getCategoryByIdValidation = [
   param('id')
-    .isNumeric().withMessage('ID harus angka')
+    .notEmpty().withMessage('ID harus diisi')
 ];

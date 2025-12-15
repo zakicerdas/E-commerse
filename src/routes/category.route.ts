@@ -4,7 +4,8 @@ import {
   createCategory, 
   getCategoryById,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  searchCategories
 } from '../controllers/categoryController';
 import { 
   createCategoryValidation,
@@ -15,6 +16,7 @@ import { validate } from '../middlewares/category.validation';
 const router = Router();
 
 router.get('/categories', getAllCategories);
+router.get('/categories/search', searchCategories)
 router.post('/categories', validate(createCategoryValidation), createCategory);
 router.get('/categories/:id', validate(getCategoryByIdValidation), getCategoryById);
 router.put('/categories/:id', validate(createCategoryValidation), updateCategory);

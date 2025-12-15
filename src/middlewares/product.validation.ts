@@ -45,5 +45,5 @@ export const createProductValidation = [
 
 export const getProductByIdValidation = [
   param('id')
-    .isNumeric().withMessage('ID harus angka')
+    .notEmpty().withMessage('ID harus diisi')
 ];

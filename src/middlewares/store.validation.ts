@@ -38,5 +38,5 @@ export const createStoreValidation = [
 
 export const getStoreByIdValidation = [
   param('id')
-    .isNumeric().withMessage('ID harus angka')
+    .notEmpty().withMessage('ID harus diisi')
 ];

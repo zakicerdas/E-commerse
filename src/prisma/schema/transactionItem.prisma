@@ -1,0 +1,12 @@
+model TransactionItem {
+   id         String   @id @default(uuid())
+
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  productId     String?
+  product       Product?     @relation(fields: [productId], references: [id])
+
+  quantity      Int
+  priceAtTime   Decimal     // Harga saat beli (penting, karena harga produk bisa berubah)
+}

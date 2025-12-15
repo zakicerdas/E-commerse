@@ -1,0 +1,12 @@
+model Transaction {
+  id         String   @id @default(uuid())
+  
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id])
+  
+  total     Decimal
+  items     TransactionItem[] // Relasi ke tabel pivot
+  createdAt DateTime          @default(now())
+
+  @@map("transaction")
+}

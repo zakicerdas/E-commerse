@@ -5,7 +5,7 @@ export const getAllStore = async (): Promise<Store[]> => {
     return await prisma.store.findMany();
 };
 
-export const getStoreById = async (id: number): Promise<Store> => {
+export const getStoreById = async (id: string): Promise<Store> => {
     const store = await prisma.store.findUnique({
         where: { id },
     });
@@ -27,7 +27,7 @@ export const createStore = async (data: { name: string; email: string; address: 
     });
 };
 
-export const updateStore = async (id: number, data: Partial<Store>): Promise<Store> => {
+export const updateStore = async (id: string, data: Partial<Store>): Promise<Store> => {
     await getStoreById(id); // Cek existance
 
     return await prisma.store.update({
@@ -36,11 +36,14 @@ export const updateStore = async (id: number, data: Partial<Store>): Promise<Sto
     });
 };
 
-export const deleteStore = async (id: number): Promise<Store> => {
+export const deleteStore = async (id: string): Promise<Store> => {
     await getStoreById(id); // Cek existance
 
-    return await prisma.store.delete({
+    return await prisma.store.update({
         where: { id },
+        data:{
+            deletedAt: new Date()
+        }
     });
 };
 
