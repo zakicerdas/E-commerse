@@ -18,6 +18,7 @@ async function main() {
         create: {
             name: "Budi Santoso",
             email: "user1@example.com",
+            password: "qwerty"
         },
     });
 
@@ -27,6 +28,7 @@ async function main() {
         create: {
             name: "Siti Aminah",
             email: "user2@example.com",
+            password: "saustartar"
         },
     });
 

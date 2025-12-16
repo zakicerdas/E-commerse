@@ -8,5 +8,8 @@ model Store {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+   userId    String
+  user      User      @relation(fields: [userId], references: [id])
+
  @@map("store")
 }

@@ -7,6 +7,8 @@ import { errorHandler } from './middlewares/error.handler';
 import categoryRoutes from './routes/category.route';
 import storeRoutes from './routes/store.route';
 import transactionRoutes from './routes/transaction.route'; 
+import authenticateRoutes from './routes/auth.route'
+import userRoutes from './routes/user.route'
 
 const app = express();
 
@@ -30,10 +32,13 @@ app.get('/', (req, res) => {
   res.json({ message: `Halo pemilik API Key: ${req.apiKey}! Hari 5 – MVC E-Commerce + Service`, waktu_proses: `${waktu}ms` });
 });
 
+
+app.use('/api/v1', userRoutes)
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', categoryRoutes);
 app.use('/api/v1', storeRoutes);
 app.use('/api/v1', transactionRoutes)
+app.use('/api/v1', authenticateRoutes)
 
 // Error handler harus di paling bawah!
 // Middleware error handling dengan 4 parameter (`err, req, res, next`) harus selalu 
