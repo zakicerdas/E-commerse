@@ -31,7 +31,10 @@ export const createProductValidation = [
     .trim()
     .optional()
     .isLength({ min: 10 }).withMessage('Deskripsi minimal 10 karakter jika diisi'),
-  
+
+  body('image')
+    .notEmpty().withMessage('Gambar wajib diisi'),
+
   body('price')
     .notEmpty().withMessage('Harga wajib diisi')
     .isNumeric().withMessage('Harga harus angka')

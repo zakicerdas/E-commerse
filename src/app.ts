@@ -9,6 +9,7 @@ import storeRoutes from './routes/store.route';
 import transactionRoutes from './routes/transaction.route'; 
 import authenticateRoutes from './routes/auth.route'
 import userRoutes from './routes/user.route'
+import profileRoutes from './routes/profile.route';
 
 const app = express();
 
@@ -37,8 +38,9 @@ app.use('/api/v1', userRoutes)
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', categoryRoutes);
 app.use('/api/v1', storeRoutes);
-app.use('/api/v1', transactionRoutes)
-app.use('/api/v1', authenticateRoutes)
+app.use('/api/v1', transactionRoutes);
+app.use('/api/v1', authenticateRoutes);
+app.use('/api/v1', profileRoutes);
 
 // Error handler harus di paling bawah!
 // Middleware error handling dengan 4 parameter (`err, req, res, next`) harus selalu 

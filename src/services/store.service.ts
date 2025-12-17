@@ -17,12 +17,13 @@ export const getStoreById = async (id: string): Promise<Store> => {
     return store;
 };
 
-export const createStore = async (data: { name: string; email: string; address: string; }): Promise<Store> => {
+export const createStore = async (data: { name: string; email: string; address: string; userId: string }): Promise<Store> => {
     return await prisma.store.create({
         data: {
             name: data.name,
             email: data.email,
             address: data.address,
+            userId: data.userId,
         },
     });
 };

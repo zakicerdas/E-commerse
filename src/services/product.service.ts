@@ -1,11 +1,6 @@
 import  prisma  from '../prisma';
 import type { Product } from '../generated/client';
 
-
-
-
-
-
 export const getAllProducts = async () => {
   return await prisma.product.findMany({
     include: {
@@ -33,6 +28,7 @@ export const createProduct = async (data: {
   description?: string;
   categoryId?: string;
   storeId?: string; 
+  image: string;
 }): Promise<Product> => {
   return await prisma.product.create({
     data: {
@@ -42,12 +38,13 @@ export const createProduct = async (data: {
       stock: data.stock,
       categoryId: data.categoryId ?? null,
       storeId: data.storeId ?? null,
+      image: data.image,
     },
   });
 };
 
 export const updateProduct = async (id: string, data: Partial<Product>): Promise<Product> => {
-  await getProductById(id); // Cek existance
+  await getProductById(id); 
 
   return await prisma.product.update({
     where: { id },
