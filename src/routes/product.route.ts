@@ -5,7 +5,6 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  searchProducts
 } from '../controllers/productController';
 import { 
   createProductValidation, 
@@ -18,10 +17,9 @@ import { upload } from '../middlewares/upload.middleware';
 const router = Router();
 
 router.get('/products', getAllProducts);
-router.get('/products/search', searchProducts);
 router.get('/products/:id', validate(getProductByIdValidation), getProductById);
-router.post('/products', validate(createProductValidation), createProduct, upload.single('image'));
-router.put('/products/:id', validate(createProductValidation), updateProduct, upload.single('image'));
+router.post('/products', upload.single('image'), validate(createProductValidation), createProduct);
+router.put('/products/:id', upload.single('image'), validate(createProductValidation), updateProduct);
 router.delete('/products/:id', validate(getProductByIdValidation), deleteProduct);
 
 export default router;

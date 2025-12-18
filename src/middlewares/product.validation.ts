@@ -32,8 +32,13 @@ export const createProductValidation = [
     .optional()
     .isLength({ min: 10 }).withMessage('Deskripsi minimal 10 karakter jika diisi'),
 
-  body('image')
-    .notEmpty().withMessage('Gambar wajib diisi'),
+   body('image')
+    .custom((_value, { req }) => {
+      if (!req.file) {
+        throw new Error('Gambar wajib diisi');
+      }
+      return true;
+    }),
 
   body('price')
     .notEmpty().withMessage('Harga wajib diisi')

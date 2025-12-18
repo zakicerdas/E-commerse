@@ -3,9 +3,29 @@ import * as storeService from '../services/store.service';
 import { asyncHandler } from '../utils/async.handler';
 import { successResponse } from '../utils/response';
 
-export const getAllStore = asyncHandler(async (_req: Request, res: Response) => {
-  const stores = await storeService.getAllStore();
-  return successResponse(res, 'Daftar toko', stores);
+export const getAllStores = asyncHandler(async (req: Request, res: Response) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const search = req.query.search as string;
+  const sortBy = req.query.sortBy as string;
+  const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+  const result = await storeService.getAllStores({
+    page,
+    limit,
+    search,
+    sortBy,
+    sortOrder
+  });
+
+  const totalPages = Math.ceil(result.total / limit);
+
+  return successResponse(res, 'Daftar toko berhasil diambil', result.data, {
+    page: result.page,
+    limit: result.limit,
+    total: result.total,
+    pages: totalPages 
+  });
 });
 
 export const getStoreById = asyncHandler(async (req: Request, res: Response) => {
@@ -29,12 +49,4 @@ export const deleteStore = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id;
   const store = await storeService.deleteStore(id as string);
   return successResponse(res, 'toko berhasil dihapus', store);
-});
-
-export const searchStore = asyncHandler(async (req: Request, res: Response) => {
-  const { name } = req.query;
-  const stores = await storeService.searchStore(
-    name as string, 
-  );
-  return successResponse(res, 'Hasil pencarian', stores);
 });

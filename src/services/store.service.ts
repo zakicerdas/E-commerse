@@ -1,8 +1,56 @@
 import  prisma  from "../prisma";
 import type { Store } from "../generated/client";
 
-export const getAllStore = async (): Promise<Store[]> => {
-    return await prisma.store.findMany();
+interface FindAllParams {
+  page: number;
+  limit: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+interface StoreListResponse {
+  data: Store[];
+  total: number;
+  pages: number;
+  page: number;  // Perbaikan: tambahkan ini
+  limit: number;
+}
+
+export const getAllStores = async (params: FindAllParams): Promise<StoreListResponse> => {
+  const { page, limit, search, sortBy, sortOrder } = params;
+
+  const skip = (page - 1) * limit;
+
+  const whereClause: any = {
+    deletedAt: null 
+  };
+
+  if (search) {
+    whereClause.name = { contains: search, mode: 'insensitive' };
+  }
+
+  const stores = await prisma.store.findMany({
+    skip: skip,
+    take: limit,
+    where: whereClause,
+    orderBy: sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' },
+    include: {
+      products: true
+    }
+  });
+
+  const totalItems = await prisma.store.count({
+    where: whereClause
+  });
+
+  return {
+    data: stores,
+    total: totalItems,
+    pages: Math.ceil(totalItems / limit),
+    page: page, 
+    limit: limit 
+  };
 };
 
 export const getStoreById = async (id: string): Promise<Store> => {
@@ -46,12 +94,4 @@ export const deleteStore = async (id: string): Promise<Store> => {
             deletedAt: new Date()
         }
     });
-};
-
-export const searchStore = async (name?: string): Promise<Store[]> => {
-    let result = await getAllStore();
-    if (name) {
-        result = result.filter(c => c.name.toLowerCase().includes(name.toLowerCase()));
-    }
-    return result;
 };

@@ -1,12 +1,56 @@
-import  prisma  from '../prisma';
+import prisma from '../prisma';
 import type { Product } from '../generated/client';
 
-export const getAllProducts = async () => {
-  return await prisma.product.findMany({
+interface FindAllParams {
+  page: number;
+  limit: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+interface ProductListResponse {
+  data: Product[];
+  total: number;
+  pages: number;
+  page: number;  // Perbaikan: tambahkan ini
+  limit: number;
+}
+
+export const getAllProducts = async (params: FindAllParams): Promise<ProductListResponse> => {
+  const { page, limit, search, sortBy, sortOrder } = params;
+
+  const skip = (page - 1) * limit;
+
+  const whereClause: any = {
+    deletedAt: null 
+  };
+
+  if (search) {
+    whereClause.name = { contains: search, mode: 'insensitive' };
+  }
+
+  const products = await prisma.product.findMany({
+    skip: skip,
+    take: limit,
+    where: whereClause,
+    orderBy: sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' },
     include: {
-      category: true 
+      category: true
     }
   });
+
+  const totalItems = await prisma.product.count({
+    where: whereClause
+  });
+
+  return {
+    data: products,
+    total: totalItems,
+    pages: Math.ceil(totalItems / limit),
+    page: page, 
+    limit: limit 
+  };
 };
 
 export const getProductById = async (id: string): Promise<Product> => {
@@ -61,15 +105,4 @@ export const deleteProduct = async (id: string): Promise<Product> => {
       deletedAt: new Date
     }
   });
-};
-
-export const searchProducts = async (name?: string, maxPrice?: number): Promise<Product[]> => {
-  let result = await getAllProducts();
-  if (name) {
-    result = result.filter(p => p.name.toLowerCase().includes(name.toLowerCase()));
-  }
-  if (maxPrice) {
-    result = result.filter(p => p.price.toNumber() <= maxPrice);
-  }
-  return result;
 };

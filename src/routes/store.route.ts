@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import {
-  getAllStore,
+  getAllStores,
   getStoreById,
   createStore,
   updateStore,
   deleteStore,
-  searchStore
 } from '../controllers/storeController';
 import { 
   createStoreValidation, 
@@ -15,8 +14,7 @@ import { validate } from '../middlewares/store.validation';
 
 const router = Router();
 
-router.get('/store', getAllStore);
-router.get('/store/search', searchStore);
+router.get('/store', getAllStores);
 router.get('/store/:id', validate(getStoreByIdValidation), getStoreById);
 router.post('/store', validate(createStoreValidation), createStore);
 router.put('/store/:id', validate(createStoreValidation), updateStore);
