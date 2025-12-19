@@ -2,14 +2,31 @@ import type { Request, Response } from 'express';
 import * as UserService from '../services/user.service';
 import type { User } from '../generated/client';
 import { asyncHandler } from '../utils/async.handler';
+import { successResponse } from '../utils/response';
 
 
-export const getAllUsers = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
-  const users = await UserService.getAllUsers();
-  res.status(200).json({
-    success: true,
-    data: users,
-    message: 'Users retrieved successfully',
+export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const search = req.query.search as string;
+  const sortBy = req.query.sortBy as string;
+  const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+  const result = await UserService.getAllUsers({
+    page,
+    limit,
+    search,
+    sortBy,
+    sortOrder
+  });
+
+  const totalPages = Math.ceil(result.total / limit);
+
+  return successResponse(res, 'Daftar user berhasil diambil', result.data, {
+    page: result.page,                                                                                                                                                                          
+    limit: result.limit,
+    total: result.total,
+    pages: totalPages 
   });
 });
 
@@ -87,15 +104,3 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response): Prom
   }
 });
 
-export const searchUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { name, email } = req.query;
-  const users = await UserService.searchUsers(
-    name as string,
-    email as string
-  );
-  res.status(200).json({
-    success: true,
-    data: users,
-    message: 'Users searched successfully',
-  });
-});

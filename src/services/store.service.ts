@@ -1,4 +1,4 @@
-import  prisma  from "../prisma";
+import * as storeRepo from "../repositories/store.repository";
 import type { Store } from "../generated/client";
 
 interface FindAllParams {
@@ -10,10 +10,10 @@ interface FindAllParams {
 }
 
 interface StoreListResponse {
-  data: Store[];
+    data: Store[];
   total: number;
   pages: number;
-  page: number;  // Perbaikan: tambahkan ini
+  page: number;  
   limit: number;
 }
 
@@ -30,33 +30,22 @@ export const getAllStores = async (params: FindAllParams): Promise<StoreListResp
     whereClause.name = { contains: search, mode: 'insensitive' };
   }
 
-  const stores = await prisma.store.findMany({
-    skip: skip,
-    take: limit,
-    where: whereClause,
-    orderBy: sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' },
-    include: {
-      products: true
-    }
-  });
+   const orderBy = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' } as const;
 
-  const totalItems = await prisma.store.count({
-    where: whereClause
-  });
+    const stores = await storeRepo.findAllStores(skip, limit, whereClause, orderBy);
+    const totalItems = await storeRepo.countStores(whereClause);
 
-  return {
-    data: stores,
-    total: totalItems,
-    pages: Math.ceil(totalItems / limit),
-    page: page, 
-    limit: limit 
-  };
+    return {
+      data: stores,
+      total: totalItems,
+      pages: Math.ceil(totalItems / limit),
+      page: page, 
+      limit: limit 
+    };
 };
 
 export const getStoreById = async (id: string): Promise<Store> => {
-    const store = await prisma.store.findUnique({
-        where: { id },
-    });
+    const store = await storeRepo.findStoreById(id);
     
     if (!store) {
         throw new Error('Store not found');
@@ -66,32 +55,23 @@ export const getStoreById = async (id: string): Promise<Store> => {
 };
 
 export const createStore = async (data: { name: string; email: string; address: string; userId: string }): Promise<Store> => {
-    return await prisma.store.create({
-        data: {
-            name: data.name,
-            email: data.email,
-            address: data.address,
-            userId: data.userId,
-        },
-    });
+    const storeData = { 
+        name: data.name,
+        email: data.email,
+        address: data.address,
+        user: { connect: { id: data.userId } }
+    };
+    return await storeRepo.createStore(storeData);
 };
 
 export const updateStore = async (id: string, data: Partial<Store>): Promise<Store> => {
-    await getStoreById(id); // Cek existance
+    await getStoreById(id);
 
-    return await prisma.store.update({
-        where: { id },
-        data,
-    });
+    return await storeRepo.updateStore(id, data);
 };
 
 export const deleteStore = async (id: string): Promise<Store> => {
-    await getStoreById(id); // Cek existance
+    await getStoreById(id);
 
-    return await prisma.store.update({
-        where: { id },
-        data:{
-            deletedAt: new Date()
-        }
-    });
+    return await storeRepo.softDeleteStore(id);
 };
