@@ -1,7 +1,6 @@
-import type { Category } from "#generated/client";
-import * as categoryRepo from "../repositories/category.repository";
+import { CategoryRepository } from '../repositories/category.repository';
 
-interface FindAllParams {
+interface findAllParams {
   page: number;
   limit: number;
   search?: string;
@@ -9,64 +8,80 @@ interface FindAllParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-interface CategoryListResponse {
-  data: Category[];
-  total: number;
-  pages: number;
-  page: number;  
-  limit: number;
+export class getAllCategoriesService {
+  constructor(private categoryRepo: CategoryRepository) { }
+
+  async execute(params: findAllParams) {
+    const { page, limit, search, sortBy, sortOrder } = params;
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      whereClause.name = { contains: search, mode: 'insensitive' };
+    }
+
+    const sortCriteria: any = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' };
+
+    const categories = await this.categoryRepo.findAll(skip, limit, whereClause, sortCriteria);
+    const totalItems = await this.categoryRepo.countAll(whereClause);
+
+    return {
+      categories,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page
+    };
+  }
 }
 
-export const getAllCategories = async (params: FindAllParams): Promise<CategoryListResponse> => {
-  const { page, limit, search, sortBy, sortOrder } = params;
-  const skip = (page - 1) * limit;
+export class getCategoryByIdService {
+  constructor(private categoryRepo: CategoryRepository) { }
 
-  const whereClause: any = {
-    deletedAt: null 
-  };
-
-  if (search) {
-    whereClause.name = { contains: search, mode: 'insensitive' };
-  }
-
-  const orderBy = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' } as const;
-
-  const categories = await categoryRepo.findAllCategories(skip, limit, whereClause, orderBy);
-  const totalItems = await categoryRepo.countCategories(whereClause);
-
-  return {
-    data: categories,
-    total: totalItems,
-    pages: Math.ceil(totalItems / limit),
-    page: page, 
-    limit: limit 
-  };
-};
-
-export const getCategoryById = async (id: string): Promise<Category> => {
-    const category = await categoryRepo.findCategoryById(id);
-    
+  async execute(id: string) {
+    const category = await this.categoryRepo.findById(id);
     if (!category) {
-        throw new Error('Category not found');
+      throw new Error('Category not found');
     }
-    
     return category;
-};
+  }
+}
 
-export const createCategory = async (data: { name: string }): Promise<Category> => {
- const category = { name: data.name };
+export class createCategoryService {
+  constructor(private categoryRepo: CategoryRepository) { }
 
- return await categoryRepo.createCategory(category);
-};
+  async execute(data: {
+    name: string;
+  }) {
+    const createData = {
+      name: data.name,
+    };
+    return await this.categoryRepo.create(createData);
+  }
+}
 
-export const updateCategory = async (id: string, data: Partial<Category>): Promise<Category> => {
-    await getCategoryById(id); 
+export class updateCategoryService {
+  constructor(private categoryRepo: CategoryRepository) { }
 
-    return await categoryRepo.updateCategory(id, data);
-};
+  async execute(id: string, data: any) {
+    const category = await this.categoryRepo.findById(id);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+    return await this.categoryRepo.update(id, data);
+  }
+}
 
-export const deleteCategory = async (id: string): Promise<Category> => {
-    await getCategoryById(id);
+export class deleteCategoryService {
+  constructor(private categoryRepo: CategoryRepository) { }
 
-    return await categoryRepo.softDeleteCategory(id);
-};
+  async execute(id: string) {
+    const category = await this.categoryRepo.findById(id);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+    return await this.categoryRepo.softDelete(id);
+  }
+}

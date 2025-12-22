@@ -1,22 +1,37 @@
 import { Router } from 'express';
 import {
-  getProfile,
-  createProfile,
-  updateProfile,
-  deleteProfile
-} from '../controllers/profileController';
+  ProductController
+} from '../controllers/productController';
+import { authenticate } from '../middlewares/auth.middleware';
+import { validate } from '../utils/validate';
+import { ProductRepository } from '../repositories/product.repository';
+import { createProductService, deleteProductService, getAllProductsService, getProductByIdService, updateProductService } from '../services/product.service';
+import { upload } from '../middlewares/upload.middleware';
 import {
-  createProfileValidation,
-  updateProfileValidation,
-  getProfileValidation,
-  validate
-} from '../middlewares/profile.validation';
+  createProductValidation,
+  getProductByIdValidation
+} from '../middlewares/product.validation';
 
 const router = Router();
 
-router.get('/profile/:userId', validate(getProfileValidation), getProfile);
-router.post('/profile', validate(createProfileValidation), createProfile);
-router.put('/profile/:userId', validate(updateProfileValidation), updateProfile);
-router.delete('/profile/:userId', validate(getProfileValidation), deleteProfile);
+const productRepository = new ProductRepository();
+const getAllProductsSvc = new getAllProductsService(productRepository);
+const getProductByIdSvc = new getProductByIdService(productRepository);
+const createProductSvc = new createProductService(productRepository);
+const updateProductSvc = new updateProductService(productRepository);
+const deleteProductSvc = new deleteProductService(productRepository);
+const productController = new ProductController(
+  getAllProductsSvc,
+  getProductByIdSvc,
+  createProductSvc,
+  updateProductSvc,
+  deleteProductSvc
+);
+
+router.get('/products', authenticate, productController.getAllProducts);
+router.get('/products/:id', authenticate, validate(getProductByIdValidation), productController.getProductById);
+router.post('/products', authenticate, upload.single('image'), validate(createProductValidation), productController.createProduct);
+router.put('/products/:id', authenticate, upload.single('image'), validate(createProductValidation), productController.updateProduct);
+router.delete('/products/:id', authenticate, validate(getProductByIdValidation), productController.deleteProduct);
 
 export default router;

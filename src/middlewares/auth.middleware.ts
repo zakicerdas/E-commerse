@@ -19,7 +19,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     try {
         const payload = jwt.verify(token, JWT_SECRET) as { id: number; role: string };
 
-        req.user = payload; // Attach user payload to request
+        req.user = payload; 
         next();
     } catch (error) {
         return res.status(401).json({ success: false, message: 'Token tidak valid' });

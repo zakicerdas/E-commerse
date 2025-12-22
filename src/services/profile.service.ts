@@ -1,53 +1,107 @@
-// profile.service.ts
-import * as profileRepo from "../repositories/profile.repository";
-import type { Profile } from "../generated/client";
+import { ProfileRepository } from "../repositories/profile.repository";
 
-export const getProfileByUserId = async (userId: string): Promise<Profile> => {
-  const profile = await profileRepo.findProfileByUserId(userId);
+interface findAllParams {
+  page: number;
+  limit: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
 
-  if (!profile) {
-    throw new Error("Profile not found");
+export class getAllProfilesService {
+  constructor(private profileRepo: ProfileRepository) { }
+
+  async execute(params: findAllParams) {
+    const { page, limit, search, sortBy, sortOrder } = params;
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      whereClause.user = {
+        is: {
+          name: { contains: search, mode: 'insensitive' }
+        }
+      };
+    }
+
+    const sortCriteria: any = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' };
+
+    const profiles = await this.profileRepo.findAll(skip, limit, whereClause, sortCriteria);
+    const totalItems = await this.profileRepo.countAll(whereClause);
+
+    return {
+      profiles,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page
+    };
   }
+}
 
-  return profile;
-};
+export class getProfileByIdService {
+  constructor(private profileRepo: ProfileRepository) { }
 
-export const createProfile = async (data: {
-  userId: string;
-  gender?: string;
-  address?: string;
-  bio?: string;
-  avatarUrl?: string;
-}): Promise<Profile> => {
-  // ⬇️ PERHATIAN: Sesuaikan dengan Prisma schema!
-  const profileData = {
-    userId: data.userId,
-    gender: data.gender || null,
-    address: data.address || null,
-    bio: data.bio || null,
-    avatarUrl: data.avatarUrl || null,
-    user: { connect: { id: data.userId } }
-  };
+  async execute(userId: string) {
+    const profile = await this.profileRepo.findById(userId);
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+    return profile;
+  }
+}
 
-  return await profileRepo.createProfile(profileData);
-};
+export class createProfileService {
+  constructor(private profileRepo: ProfileRepository) { }
 
-export const updateProfile = async (
-  userId: string,
-  data: Partial<Omit<Profile, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
-): Promise<Profile> => {
-  await getProfileByUserId(userId);
+  async execute(data: {
+    gender?: string;
+    address?: string;
+    bio?: string;
+    avatarUrl?: string;
+    userId: string;
+  }) {
+    const createData: any = {
+      gender: data.gender || undefined,
+      address: data.address || undefined,
+      bio: data.bio || undefined,
+      avatarUrl: data.avatarUrl || undefined,
+      userId: data.userId
+    };
+    return await this.profileRepo.create(createData);
+  }
+}
 
-  const updateData: any = {};
-  if (data.gender !== undefined) updateData.gender = data.gender || null;
-  if (data.address !== undefined) updateData.address = data.address || null;
-  if (data.bio !== undefined) updateData.bio = data.bio || null;
-  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl || null;
+export class updateProfileService {
+  constructor(private profileRepo: ProfileRepository) { }
 
-  return await profileRepo.updateProfile(userId, updateData);
-};
+  async execute(userId: string, data: any) {
+    const profile = await this.profileRepo.findById(userId);
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
 
-export const deleteProfile = async (userId: string): Promise<Profile> => {
-  await getProfileByUserId(userId);
-  return await profileRepo.deleteProfile(userId);
-};
+    const updateData: any = {
+      gender: data.gender || undefined,
+      address: data.address || undefined,
+      bio: data.bio || undefined,
+      avatarUrl: data.avatarUrl || undefined,
+    };
+
+    return await this.profileRepo.update(userId, updateData);
+  }
+}
+
+export class deleteProfileService {
+  constructor(private profileRepo: ProfileRepository) { }
+
+  async execute(userId: string) {
+    const profile = await this.profileRepo.findById(userId);
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+    return await this.profileRepo.softDelete(userId);
+  }
+}

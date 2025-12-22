@@ -1,46 +1,91 @@
 import type { Request, Response } from 'express';
-import * as profileService from '../services/profile.service';
+import {
+  createProfileService,
+  deleteProfileService,
+  getAllProfilesService,
+  getProfileByIdService,
+  updateProfileService
+} from '../services/profile.service';
 import { asyncHandler } from '../utils/async.handler';
 import { successResponse } from '../utils/response';
 
-export const getProfile = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.userId;
-  const profile = await profileService.getProfileByUserId(userId as string);
-  return successResponse(res, 'Profile ditemukan', profile);
-});
+export class ProfileController {
+  constructor(
+    private getAllProfilesSvc: getAllProfilesService,
+    private getProfileByIdSvc: getProfileByIdService,
+    private createProfileSvc: createProfileService,
+    private updateProfileSvc: updateProfileService,
+    private deleteProfileSvc: deleteProfileService
+  ) { }
 
-export const createProfile = asyncHandler(async (req: Request, res: Response) => {
-  const file = req.file;
+  getAllProfiles = asyncHandler(async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string;
+    const sortBy = req.query.sortBy as string;
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
 
-  const profileData = {
-    userId: req.body.userId,
-    gender: req.body.gender,
-    address: req.body.address,
-    bio: req.body.bio,
-    avatarUrl: file ? `/public/uploads/${file.filename}` : req.body.avatarUrl
-  };
+    const result = await this.getAllProfilesSvc.execute({
+      page,
+      limit,
+      search,
+      sortBy,
+      sortOrder,
+    });
 
-  const profile = await profileService.createProfile(profileData);
-  return successResponse(res, 'Profile berhasil dibuat', profile, null, 201);
-});
+    const pagination = {
+      page: result.currentPage,
+      limit: limit,
+      total: result.totalItems,
+      totalPages: result.totalPages
+    };
 
-export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.userId;
-  const file = req.file;
+    return successResponse(res, 'Daftar profil', result.profiles, pagination);
+  });
 
-  const profileData = {
-    gender: req.body.gender,
-    address: req.body.address,
-    bio: req.body.bio,
-    avatarUrl: file ? `/public/uploads/${file.filename}` : req.body.avatarUrl
-  };
+  getProfileById = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const profile = await this.getProfileByIdSvc.execute(userId as string);
+    return successResponse(res, 'Profil ditemukan', profile);
+  });
 
-  const profile = await profileService.updateProfile(userId as string, profileData);
-  return successResponse(res, 'Profile berhasil diupdate', profile);
-});
+  createProfile = asyncHandler(async (req: Request, res: Response) => {
+    const file = req.file;
 
-export const deleteProfile = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.params.userId;
-  const profile = await profileService.deleteProfile(userId as string);
-  return successResponse(res, 'Profile berhasil dihapus', profile);
-});
+    const avatarUrl = file ? `/public/uploads/${file.filename}` : undefined;
+
+    const profileData: any = {
+      userId: req.body.userId,
+      gender: req.body.gender || undefined,
+      address: req.body.address || undefined,
+      bio: req.body.bio || undefined,
+      avatarUrl: avatarUrl
+    };
+
+    const profile = await this.createProfileSvc.execute(profileData);
+    return successResponse(res, 'Profil berhasil ditambahkan', profile, null, 201);
+  });
+
+  updateProfile = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const file = req.file;
+
+    const avatarUrl = file ? `/public/uploads/${file.filename}` : undefined;
+
+    const profileData: any = {
+      gender: req.body.gender || undefined,
+      address: req.body.address || undefined,
+      bio: req.body.bio || undefined,
+      ...(avatarUrl && { avatarUrl: avatarUrl })
+    };
+
+    const profile = await this.updateProfileSvc.execute(userId as string, profileData);
+    return successResponse(res, 'Profil berhasil diupdate', profile);
+  });
+
+  deleteProfile = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+    const profile = await this.deleteProfileSvc.execute(userId as string);
+    return successResponse(res, 'Profil berhasil dihapus', profile);
+  });
+}

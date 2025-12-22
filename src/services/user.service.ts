@@ -1,8 +1,7 @@
-import * as userRepo from "../repositories/user.repository";
-import type { User } from "../generated/client";
+import { UserRepository } from "../repositories/user.repository";
 import bcrypt from 'bcrypt';
 
-interface FindAllParams {
+interface findAllParams {
   page: number;
   limit: number;
   search?: string;
@@ -10,73 +9,91 @@ interface FindAllParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-interface UserListResponse {
-  data: User[];
-  total: number;
-  pages: number;
-  page: number;
-  limit: number;
+export class getAllUsersService {
+  constructor(private userRepo: UserRepository) { }
+
+  async execute(params: findAllParams) {
+    const { page, limit, search, sortBy, sortOrder } = params;
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      whereClause.name = { contains: search, mode: 'insensitive' };
+    }
+
+    const sortCriteria: any = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' };
+
+    const users = await this.userRepo.findAll(skip, limit, whereClause, sortCriteria);
+    const totalItems = await this.userRepo.countAll(whereClause);
+
+    return {
+      users,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page
+    };
+  }
 }
 
-export const getAllUsers = async (params: FindAllParams): Promise<UserListResponse> => {
-  const { page, limit, search, sortBy, sortOrder } = params;
-  const skip = (page - 1) * limit;
+export class getUserByIdService {
+  constructor(private userRepo: UserRepository) { }
 
-  const whereClause: any = {
-    deletedAt: null
-  };
-
-  if (search) {
-    whereClause.name = { contains: search, mode: 'insensitive' };
+  async execute(id: string) {
+    const user = await this.userRepo.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
+}
 
-  const orderBy = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' } as const;
+export class createUserService {
+  constructor(private userRepo: UserRepository) { }
 
-  const users = await userRepo.findAllUsers(skip, limit, whereClause, orderBy);
-  const totalItems = await userRepo.countUsers(whereClause);
+  async execute(data: {
+    name: string;
+    email: string;
+    password: string;
+  }) {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  return {
-    data: users,
-    total: totalItems,
-    pages: Math.ceil(totalItems / limit),
-    page: page,
-    limit: limit
-  };
-};
-
-export const getUserById = async (id: string): Promise<User> => {
-  const user = await userRepo.findUserById(id);
-
-  if (!user) {
-    throw new Error("User not found");
+    const createData: any = {
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+    };
+    return await this.userRepo.create(createData);
   }
+}
 
-  return user;
-};
+export class updateUserService {
+  constructor(private userRepo: UserRepository) { }
 
-export const createUser = async (data: { name: string; email: string; password: string }): Promise<User> => {
-  const hashedPassword = await bcrypt.hash(data.password, 10);
+  async execute(id: string, data: any) {
+    const user = await this.userRepo.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
-  const userData = {
-    username: data.name,
-    email: data.email,
-    password: hashedPassword,
-  };
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
 
-  return await userRepo.createUser(userData);
-};
-
-export const updateUser = async (id: string, data: Partial<User>): Promise<User> => {
-  await getUserById(id);
-
-  if (data.password) {
-    data.password = await bcrypt.hash(data.password, 10);
+    return await this.userRepo.update(id, data);
   }
+}
 
-  return await userRepo.updateUser(id, data);
-};
+export class deleteUserService {
+  constructor(private userRepo: UserRepository) { }
 
-export const deleteUser = async (id: string): Promise<User> => {
-  await getUserById(id);
-  return await userRepo.softDeleteUser(id);
-};
+  async execute(id: string) {
+    const user = await this.userRepo.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return await this.userRepo.softDelete(id);
+  }
+}

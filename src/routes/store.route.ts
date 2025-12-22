@@ -1,23 +1,36 @@
 import { Router } from 'express';
 import {
-  getAllStores,
-  getStoreById,
-  createStore,
-  updateStore,
-  deleteStore,
+  StoreController
 } from '../controllers/storeController';
-import { 
-  createStoreValidation, 
-  getStoreByIdValidation 
+import { authenticate } from '../middlewares/auth.middleware';
+import { validate } from '../utils/validate';
+import { StoreRepository } from '../repositories/store.repository';
+import { createStoreService, deleteStoreService, getAllStoresService, getStoreByIdService, updateStoreService } from '../services/store.service';
+import {
+  createStoreValidation,
+  getStoreByIdValidation
 } from '../middlewares/store.validation';
-import { validate } from '../middlewares/store.validation';
 
 const router = Router();
 
-router.get('/store', getAllStores);
-router.get('/store/:id', validate(getStoreByIdValidation), getStoreById);
-router.post('/store', validate(createStoreValidation), createStore);
-router.put('/store/:id', validate(createStoreValidation), updateStore);
-router.delete('/store/:id', validate(getStoreByIdValidation), deleteStore);
+const storeRepository = new StoreRepository();
+const getAllStoresSvc = new getAllStoresService(storeRepository);
+const getStoreByIdSvc = new getStoreByIdService(storeRepository);
+const createStoreSvc = new createStoreService(storeRepository);
+const updateStoreSvc = new updateStoreService(storeRepository);
+const deleteStoreSvc = new deleteStoreService(storeRepository);
+const storeController = new StoreController(
+  getAllStoresSvc,
+  getStoreByIdSvc,
+  createStoreSvc,
+  updateStoreSvc,
+  deleteStoreSvc
+);
+
+router.get('/stores', authenticate, storeController.getAllStores);
+router.get('/stores/:id', authenticate, validate(getStoreByIdValidation), storeController.getStoreById);
+router.post('/stores', authenticate, validate(createStoreValidation), storeController.createStore);
+router.put('/stores/:id', authenticate, validate(createStoreValidation), storeController.updateStore);
+router.delete('/stores/:id', authenticate, validate(getStoreByIdValidation), storeController.deleteStore);
 
 export default router;

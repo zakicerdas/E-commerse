@@ -1,52 +1,75 @@
 import type { Request, Response } from 'express';
-import * as categoryService  from '../services/category.service';
+import {
+  createCategoryService,
+  deleteCategoryService,
+  getAllCategoriesService,
+  getCategoryByIdService,
+  updateCategoryService
+} from '../services/category.service';
 import { asyncHandler } from '../utils/async.handler';
 import { successResponse } from '../utils/response';
 
- export const getAllCategories = asyncHandler(async (req: Request, res: Response) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const search = req.query.search as string;
-  const sortBy = req.query.sortBy as string;
-  const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+export class CategoryController {
+  constructor(
+    private getAllCategoriesSvc: getAllCategoriesService,
+    private getCategoryByIdSvc: getCategoryByIdService,
+    private createCategorySvc: createCategoryService,
+    private updateCategorySvc: updateCategoryService,
+    private deleteCategorySvc: deleteCategoryService
+  ) { }
 
-  const result = await categoryService.getAllCategories({
-    page,
-    limit,
-    search,
-    sortBy,
-    sortOrder
+  getAllCategories = asyncHandler(async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string;
+    const sortBy = req.query.sortBy as string;
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+
+    const result = await this.getAllCategoriesSvc.execute({
+      page,
+      limit,
+      search,
+      sortBy,
+      sortOrder,
+    });
+
+    const pagination = {
+      page: result.currentPage,
+      limit: limit,
+      total: result.totalItems,
+      totalPages: result.totalPages
+    };
+
+    return successResponse(res, 'Daftar kategori', result.categories, pagination);
   });
 
-  const totalPages = Math.ceil(result.total / limit);
-
-  return successResponse(res, 'Daftar kategori berhasil diambil', result.data, {
-    page: result.page,
-    limit: result.limit,
-    total: result.total,
-    pages: totalPages 
+  getCategoryById = asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const category = await this.getCategoryByIdSvc.execute(id as string);
+    return successResponse(res, 'Kategori ditemukan', category);
   });
-});
 
-export const getCategoryById = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const category = await categoryService.getCategoryById(id as string);
-  return successResponse(res, 'Kategori ditemukan', category);
-});
 
-export const createCategory = asyncHandler(async (req: Request, res: Response) => {
-  const category = await categoryService.createCategory(req.body);
-  return successResponse(res, 'Kategori berhasil ditambahkan', category, null, 201);
-});
+ createCategory = asyncHandler(async (req: Request, res: Response) => {
+    const categoryData = {
+      name: req.body.name
+    };
+    const category = await this.createCategorySvc.execute(categoryData);
+    return successResponse(res, 'Kategori berhasil ditambahkan', category, null, 201);
+  });
 
-export const updateCategory = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const category = await categoryService.updateCategory(id as string, req.body);
-  return successResponse(res, 'Kategori berhasil diupdate', category);
-});
+  updateCategory = asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const categoryData = {
+      name: req.body.name
+    };
+    const category = await this.updateCategorySvc.execute(id as string, categoryData);
+    return successResponse(res, 'Kategori berhasil diupdate', category);
+  });
 
-export const deleteCategory = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const category = await categoryService.deleteCategory(id as string);
-  return successResponse(res, 'Kategori berhasil dihapus', category);
-});
+  deleteCategory = asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const category = await this.deleteCategorySvc.execute(id as string);
+    return successResponse(res, 'Kategori berhasil dihapus', category);
+  });
+}

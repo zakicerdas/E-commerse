@@ -1,54 +1,43 @@
 import prisma from '../prisma';
 import type { Prisma } from '../generated/client';
 
-export const findProfileByUserId = async (userId: string) => {
-  return await prisma.profile.findUnique({
-    where: { userId },
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          email: true,
-        }
-      }
-    }
-  });
-};
+export class ProfileRepository {
+  async findAll(skip: number, take: number, where: Prisma.ProfileWhereInput, orderBy: Prisma.ProfileOrderByWithRelationInput) {
+    return await prisma.profile.findMany({
+      skip,
+      take,
+      where,
+      orderBy,
+      include: { user: true }
+    });
+  }
 
-export const createProfile = async (data: Prisma.ProfileCreateInput) => {
-  return await prisma.profile.create({
-    data,
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          email: true,
-        }
-      }
-    }
-  });
-};
+  async countAll(where: Prisma.ProfileWhereInput) {
+    return await prisma.profile.count({ where });
+  }
 
-export const updateProfile = async (userId: string, data: Prisma.ProfileUpdateInput) => {
-  return await prisma.profile.update({
-    where: { userId },
-    data,
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          email: true,
-        }
-      }
-    }
-  });
-};
+  async findById(id: string) {
+    return await prisma.profile .findUnique({
+      where: { id, deletedAt: null },
+      include: { user: true }
+    });
+  }
 
-export const deleteProfile = async (userId: string) => {
-  return await prisma.profile.delete({
-    where: { userId }
-  });
-};
+  async create(data: Prisma.ProfileCreateInput) {
+    return await prisma.profile.create({ data });
+  }
+
+  async update(id: string, data: Prisma.ProfileUpdateInput) {
+    return await prisma.profile.update({
+      where: { id },
+      data
+    });
+  }
+
+  async softDelete(id: string) {
+    return await prisma.profile.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
+  }
+}

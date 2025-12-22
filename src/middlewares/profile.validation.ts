@@ -54,7 +54,7 @@ export const updateProfileValidation = [
     .isURL().withMessage('Avatar harus URL valid'),
 ];
 
-export const getProfileValidation = [
+export const getProfileByIdValidation = [
   param('userId')
     .notEmpty().withMessage('User ID harus diisi'),
 ];

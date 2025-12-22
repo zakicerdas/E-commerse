@@ -1,7 +1,6 @@
-import * as storeRepo from "../repositories/store.repository";
-import type { Store } from "../generated/client";
+import { StoreRepository } from "../repositories/store.repository";
 
-interface FindAllParams {
+interface findAllParams {
   page: number;
   limit: number;
   search?: string;
@@ -9,69 +8,93 @@ interface FindAllParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-interface StoreListResponse {
-    data: Store[];
-  total: number;
-  pages: number;
-  page: number;  
-  limit: number;
-}
+export class getAllStoresService {
+  constructor(private storeRepo: StoreRepository) { }
 
-export const getAllStores = async (params: FindAllParams): Promise<StoreListResponse> => {
-  const { page, limit, search, sortBy, sortOrder } = params;
+  async execute(params: findAllParams) {
+    const { page, limit, search, sortBy, sortOrder } = params;
+    const skip = (page - 1) * limit;
 
-  const skip = (page - 1) * limit;
+    const whereClause: any = {
+      deletedAt: null,
+    };
 
-  const whereClause: any = {
-    deletedAt: null 
-  };
+    if (search) {
+      whereClause.name = { contains: search, mode: 'insensitive' };
+    }
 
-  if (search) {
-    whereClause.name = { contains: search, mode: 'insensitive' };
-  }
+    const sortCriteria: any = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' };
 
-   const orderBy = sortBy ? { [sortBy]: sortOrder || 'desc' } : { createdAt: 'desc' } as const;
-
-    const stores = await storeRepo.findAllStores(skip, limit, whereClause, orderBy);
-    const totalItems = await storeRepo.countStores(whereClause);
+    const stores = await this.storeRepo.findAll(skip, limit, whereClause, sortCriteria);
+    const totalItems = await this.storeRepo.countAll(whereClause);
 
     return {
-      data: stores,
-      total: totalItems,
-      pages: Math.ceil(totalItems / limit),
-      page: page, 
-      limit: limit 
+      stores,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page
     };
-};
+  }
+}
 
-export const getStoreById = async (id: string): Promise<Store> => {
-    const store = await storeRepo.findStoreById(id);
-    
+export class getStoreByIdService {
+  constructor(private storeRepo: StoreRepository) { }
+
+  async execute(id: string) {
+    const store = await this.storeRepo.findById(id);
     if (!store) {
-        throw new Error('Store not found');
+      throw new Error('Store not found');
+    }
+    return store;
+  }
+}
+
+export class createStoreService {
+  constructor(private storeRepo: StoreRepository) { }
+
+  async execute(data: {
+    name: string;
+    email?: string;
+    address?: string;
+    userId: string;
+  }) {
+    const createData: any = {
+      name: data.name,
+      email: data.email || undefined,
+      address: data.address || undefined,
+      userId: data.userId,
+    };
+    return await this.storeRepo.create(createData);
+  }
+}
+
+export class updateStoreService {
+  constructor(private storeRepo: StoreRepository) { }
+
+  async execute(id: string, data: any) {
+    const store = await this.storeRepo.findById(id);
+    if (!store) {
+      throw new Error('Store not found');
     }
     
-    return store;
-};
-
-export const createStore = async (data: { name: string; email: string; address: string; userId: string }): Promise<Store> => {
-    const storeData = { 
-        name: data.name,
-        email: data.email,
-        address: data.address,
-        user: { connect: { id: data.userId } }
+    const updateData: any = {
+      name: data.name || undefined,
+      email: data.email || undefined,
+      address: data.address || undefined,
     };
-    return await storeRepo.createStore(storeData);
-};
+    
+    return await this.storeRepo.update(id, updateData);
+  }
+}
 
-export const updateStore = async (id: string, data: Partial<Store>): Promise<Store> => {
-    await getStoreById(id);
+export class deleteStoreService {
+  constructor(private storeRepo: StoreRepository) { }
 
-    return await storeRepo.updateStore(id, data);
-};
-
-export const deleteStore = async (id: string): Promise<Store> => {
-    await getStoreById(id);
-
-    return await storeRepo.softDeleteStore(id);
-};
+  async execute(id: string) {
+    const store = await this.storeRepo.findById(id);
+    if (!store) {
+      throw new Error('Store not found');
+    }
+    return await this.storeRepo.softDelete(id);
+  }
+}

@@ -1,83 +1,96 @@
 import type { Request, Response } from 'express';
-import * as ProductService  from '../services/product.service';
+import {
+  createProductService,
+  deleteProductService,
+  getAllProductsService,
+  getProductByIdService,
+  updateProductService
+} from '../services/product.service';
 import { asyncHandler } from '../utils/async.handler';
 import { successResponse } from '../utils/response';
 
+export class ProductController {
+  constructor(
+    private getAllProductsSvc: getAllProductsService,
+    private getProductByIdSvc: getProductByIdService,
+    private createProductSvc: createProductService,
+    private updateProductSvc: updateProductService,
+    private deleteProductSvc: deleteProductService
+  ) { }
 
- export const getAllProducts = asyncHandler(async (req: Request, res: Response) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const search = req.query.search as string;
-  const sortBy = req.query.sortBy as string;
-  const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+  getAllProducts = asyncHandler(async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string;
+    const sortBy = req.query.sortBy as string;
+    const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
 
-  const result = await ProductService.getAllProducts({
-    page,
-    limit,
-    search,
-    sortBy,
-    sortOrder
+    const result = await this.getAllProductsSvc.execute({
+      page,
+      limit,
+      search,
+      sortBy,
+      sortOrder,
+    });
+
+    const pagination = {
+      page: result.currentPage,
+      limit: limit,
+      total: result.totalItems,
+      totalPages: result.totalPages
+    };
+
+    return successResponse(res, 'Daftar produk', result.products, pagination);
   });
 
-  const totalPages = Math.ceil(result.total / limit);
-
-  return successResponse(res, 'Daftar produk berhasil diambil', result.data, {
-    page: result.page,
-    limit: result.limit,
-    total: result.total,
-    pages: totalPages 
+  getProductById = asyncHandler(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const product = await this.getProductByIdSvc.execute(id as string);
+    return successResponse(res, 'Produk ditemukan', product);
   });
-});
 
-
-export const getProductById = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const product = await ProductService.getProductById(id as string);
-  return successResponse(res, 'Produk ditemukan', product);
-});
-
-export const createProduct = asyncHandler(async (req: Request, res: Response) => {
+  createProduct = asyncHandler(async (req: Request, res: Response) => {
     const file = req.file; 
-  
-  if (!file) {
+
+    if (!file) {
       return res.status(400).json({ message: "Image is required" });
-  }
-  const imageUrl = `/public/uploads/${file.filename}`;
+    }
 
-  const productData = {
-      ...req.body,
-      price: Number(req.body.price), // Konversi manual karena form-data mengirim string
-      stock: Number(req.body.stock),
-      categoryId: Number(req.body.categoryId),
-      image: imageUrl
-  };
-  const product = await ProductService.createProduct(productData);
-  return successResponse(res, 'Produk berhasil ditambahkan', product, null, 201);
-});
+    const imageUrl = `/public/uploads/${file.filename}`;
 
-export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
-    const file = req.file;
-  
-  if (!file) {
-      return res.status(400).json({ message: "Image is required" });
-  }
-
-  const imageUrl = `/public/uploads/${file.filename}`;
-
-  const productData = {
+    const productData = {
       ...req.body,
       price: Number(req.body.price), 
       stock: Number(req.body.stock),
       categoryId: Number(req.body.categoryId),
       image: imageUrl
-  };
-  const id = req.params.id;
-  const product = await ProductService.updateProduct(id as string, productData);
-  return successResponse(res, 'Produk berhasil diupdate', product);
-});
+    };
+    const product = await this.createProductSvc.execute(productData);
+    return successResponse(res, 'Produk berhasil ditambahkan', product, null, 201);
+  });
 
-export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const product = await ProductService.deleteProduct(id as string);
-  return successResponse(res, 'Produk berhasil dihapus', product);
-});
+  updateProduct = asyncHandler(async (req: Request, res: Response) => {
+    const file = req.file; 
+    let imageUrl = req.body.image; 
+    if (file) {
+      imageUrl = `/public/uploads/${file.filename}`;
+    }
+
+    const productData = {
+      ...req.body,
+      price: req.body.price ? Number(req.body.price) : undefined,
+      stock: req.body.stock ? Number(req.body.stock) : undefined,
+      categoryId: req.body.categoryId ? String(req.body.categoryId) : undefined,
+      image: imageUrl
+    };
+    const id = req.params.id;
+    const product = await this.updateProductSvc.execute(id as string, productData);
+    return successResponse(res, 'Produk berhasil diupdate', product);
+  });
+
+  deleteProduct = asyncHandler(async (req: Request, res: Response) => {
+    const id =req.params.id;
+    const product = await this.deleteProductSvc.execute(id as string);
+    return successResponse(res, 'Produk berhasil dihapus', product);
+  });
+}

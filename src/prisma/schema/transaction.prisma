@@ -7,6 +7,7 @@ model Transaction {
   total     Decimal
   items     TransactionItem[] // Relasi ke tabel pivot
   createdAt DateTime          @default(now())
+  deletedAt DateTime?
 
   @@map("transaction")
 }
