@@ -1,4 +1,5 @@
 import { ProductRepository } from '../repositories/product.repository';
+import type { Prisma } from '../generated/client';
 
 interface findAllParams {
   page: number;
@@ -15,7 +16,7 @@ export class getAllProductsService {
     const { page, limit, search, sortBy, sortOrder } = params;
     const skip = (page - 1) * limit;
 
-    const whereClause: any = {
+    const whereClause: Prisma.ProductWhereInput = {
       deletedAt: null,
     };
 
@@ -35,6 +36,20 @@ export class getAllProductsService {
       currentPage: page
     };
   }
+}
+
+export class getProductStatsService {
+  constructor(private productRepo: ProductRepository) { }
+
+async execute(categoryId?: string) {
+  const stats = await this.productRepo.getStatistics(categoryId);
+  const categoryStats = await this.productRepo.getProductsByCategoryStats(categoryId); // Teruskan kemari
+  
+  return {
+    overview: stats,
+    byCategory: categoryStats
+  };
+}
 }
 
 export class getProductByIdService {
@@ -57,22 +72,23 @@ export class createProductService {
     price: number;
     stock: number;
     description?: string;
-    categoryId?: string;
-    storeId?: string;
+    categoryId: string;
     image?: string;
   }) {
-    const createData = {
+    const createData: Prisma.ProductCreateInput = {
       name: data.name,
       description: data.description ?? null,
       price: data.price,
       stock: data.stock,
       image: data.image ?? null,
-      categoryId: data.categoryId ?? null,
-      storeId: data.storeId ?? null
+      category: {
+        connect: { id: data.categoryId }
+      }
     };
     return await this.productRepo.create(createData);
   }
 }
+
 
 export class updateProductService {
   constructor(private productRepo: ProductRepository) { }

@@ -1,37 +1,45 @@
 import { Router } from 'express';
 import {
-  ProductController
-} from '../controllers/productController';
+  ProfileController
+} from '../controllers/profileController';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../utils/validate';
-import { ProductRepository } from '../repositories/product.repository';
-import { createProductService, deleteProductService, getAllProductsService, getProductByIdService, updateProductService } from '../services/product.service';
+import { ProfileRepository } from '../repositories/profile.repository';
+import { 
+  createProfileService, 
+  deleteProfileService, 
+  getAllProfilesService, 
+  getProfileByIdService, 
+  updateProfileService 
+} from '../services/profile.service';
 import { upload } from '../middlewares/upload.middleware';
 import {
-  createProductValidation,
-  getProductByIdValidation
-} from '../middlewares/product.validation';
+  createProfileValidation,
+  getProfileByIdValidation,
+  updateProfileValidation
+} from '../middlewares/profile.validation';
 
 const router = Router();
 
-const productRepository = new ProductRepository();
-const getAllProductsSvc = new getAllProductsService(productRepository);
-const getProductByIdSvc = new getProductByIdService(productRepository);
-const createProductSvc = new createProductService(productRepository);
-const updateProductSvc = new updateProductService(productRepository);
-const deleteProductSvc = new deleteProductService(productRepository);
-const productController = new ProductController(
-  getAllProductsSvc,
-  getProductByIdSvc,
-  createProductSvc,
-  updateProductSvc,
-  deleteProductSvc
+const profileRepository = new ProfileRepository();
+const getAllProfilesSvc = new getAllProfilesService(profileRepository);
+const getProfileByIdSvc = new getProfileByIdService(profileRepository);
+const createProfileSvc = new createProfileService(profileRepository);
+const updateProfileSvc = new updateProfileService(profileRepository);
+const deleteProfileSvc = new deleteProfileService(profileRepository);
+
+const profileController = new ProfileController(
+  getAllProfilesSvc,
+  getProfileByIdSvc,
+  createProfileSvc,
+  updateProfileSvc,
+  deleteProfileSvc
 );
 
-router.get('/products', authenticate, productController.getAllProducts);
-router.get('/products/:id', authenticate, validate(getProductByIdValidation), productController.getProductById);
-router.post('/products', authenticate, upload.single('image'), validate(createProductValidation), productController.createProduct);
-router.put('/products/:id', authenticate, upload.single('image'), validate(createProductValidation), productController.updateProduct);
-router.delete('/products/:id', authenticate, validate(getProductByIdValidation), productController.deleteProduct);
+router.get('/profiles', authenticate, profileController.getAllProfiles);
+router.get('/profiles/:userId', authenticate, validate(getProfileByIdValidation), profileController.getProfileById);
+router.post('/profiles', authenticate, upload.single('avatar'), validate(createProfileValidation), profileController.createProfile);
+router.put('/profiles/:userId', authenticate, upload.single('avatar'), validate(updateProfileValidation), profileController.updateProfile);
+router.delete('/profiles/:userId', authenticate, validate(getProfileByIdValidation), profileController.deleteProfile);
 
 export default router;
