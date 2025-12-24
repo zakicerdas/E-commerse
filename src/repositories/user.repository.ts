@@ -8,7 +8,7 @@ export class UserRepository {
       take,
       where,
       orderBy,
-      include: { profiles: true, stores: true }
+      include: { profile: true, stores: true }
     });
   }
 
@@ -19,7 +19,7 @@ export class UserRepository {
   async findById(id: string) {
     return await prisma.user.findUnique({
       where: { id, deletedAt: null },
-      include: { profiles: true, stores: true }
+      include: { profile: true, stores: true }
     });
   }
 

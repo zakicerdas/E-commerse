@@ -10,6 +10,8 @@ import transactionRoutes from './routes/transaction.route';
 import authenticateRoutes from './routes/auth.route'
 import userRoutes from './routes/user.route'
 import profileRoutes from './routes/profile.route';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './utils/swagger'; 
 
 const app = express();
 
@@ -18,19 +20,15 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Custom middleware (dari Hari 4)
-app.use((req, res, next) => {
-  req.startTime = Date.now();
-  const apiKey = req.headers['x-api-key'] as string;
-  if (!apiKey) return res.status(401).json({ success: false, message: 'Kirim header X-API-Key' });
-  req.apiKey = apiKey;
-  next();
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
+app.get('/', (_req, res) => {
+  res.redirect('/api-docs');
 });
 
-// Routes
-app.get('/', (req, res) => {
-  const waktu = Date.now() - (req.startTime || 0);
-  res.json({ message: `Halo pemilik API Key: ${req.apiKey}! Hari 5 – MVC E-Commerce + Service`, waktu_proses: `${waktu}ms` });
+app.get('/', (_req, res) => {
+  res.json({ message: 'Halo! Hari 5 – MVC E-Commerce + Service' });
 });
 
 
