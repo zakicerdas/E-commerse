@@ -1,42 +1,21 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import { APP_URL } from './env';
 
 const options: swaggerJsdoc.Options = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'E-Commerce API Documentation',
-            version: '1.0.0',
-            description: 'Dokumentasi lengkap API E-Commerce',
-            contact: {
-                name: 'Backend Developer',
-            },
-        },
-        servers: [
-            {
-                url: APP_URL,
-                description: 'API Server',
-            },
-        ],
-        components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                },
-            },
-        },
-        security: [
-            {
-                bearerAuth: [],
-            },
-        ],
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'E-Commerce API',
+      version: '1.0.0',
     },
-    // PENTING: Tentukan file mana yang mengandung anotasi Swagger
-    apis: ['./src/routes/*.ts'],
+    servers: [
+      {
+        url: '/api/v1',
+      },
+    ],
+  },
+
+  // ⚠️ PRODUKSI = DIST
+  apis: ['./dist/routes/*.js'],
 };
 
-const swaggerSpec = swaggerJsdoc(options);
-
-export default swaggerSpec;
+export default swaggerJsdoc(options);
