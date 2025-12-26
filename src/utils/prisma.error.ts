@@ -1,4 +1,4 @@
-import { Prisma } from "#generated/client";
+import { Prisma } from "../generated/client";
 
 function isPrismaClientKnownRequestError(
   error: unknown,
