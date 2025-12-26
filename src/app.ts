@@ -27,9 +27,6 @@ app.get('/', (_req, res) => {
   res.redirect('/api-docs');
 });
 
-app.get('/', (_req, res) => {
-  res.json({ message: 'Halo! Hari 5 – MVC E-Commerce + Service' });
-});
 
 
 app.use('/api/v1', userRoutes)
