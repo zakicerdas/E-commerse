@@ -22,12 +22,6 @@ app.use(express.json());
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-
-app.get('/', (_req, res) => {
-  res.json({ message: 'Halo! Hari 5 – MVC E-Commerce + Service' });
-});
-
-
 app.use('/api/v1', userRoutes)
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', categoryRoutes);
