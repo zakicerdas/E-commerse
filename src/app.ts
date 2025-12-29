@@ -24,9 +24,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 app.get('/', (_req, res) => {
-  res.redirect('/api-docs');
+  res.json({ message: 'Halo! Hari 5 – MVC E-Commerce + Service' });
 });
-
 
 
 app.use('/api/v1', userRoutes)
