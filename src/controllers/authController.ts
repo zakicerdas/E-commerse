@@ -3,8 +3,10 @@ import * as AuthService from '../services/auth.service';
 import { asyncHandler } from '../utils/async.handler';
 import { successResponse } from '../utils/response';
 
+
 export const register = asyncHandler(
   async (req: Request, res: Response) => {
+    console.log('REQ BODY:', req.body);
     const user = await AuthService.register(req.body);
     return successResponse(
       res,
@@ -14,6 +16,8 @@ export const register = asyncHandler(
       201
     );
   }
+
+  
 );
 
 export const login = asyncHandler(
@@ -27,3 +31,5 @@ export const login = asyncHandler(
     );
   }
 );
+
+
