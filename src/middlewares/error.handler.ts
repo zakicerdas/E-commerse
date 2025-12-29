@@ -1,32 +1,37 @@
 import type { Request, Response, NextFunction } from 'express';
-import { errorResponse } from '../utils/response';
 import { NODE_ENV } from '../utils/env';
 import { Prisma } from '#generated/client';
 
 export const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('ERROR:', err.message);
+  console.error('ERROR:', err);
 
-  const statusCode = err.message.includes('tidak ditemukan') ? 404 : 400;
+  if (res.headersSent) {
+    return;
+  }
 
-  errorResponse(res, err.message || 'Terjadi kesalahan server', statusCode, 
-    NODE_ENV === 'development' ? { stack: err.stack } : null
-  );
-
-   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  // Prisma errors dulu
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        message: "Data sudah ada (Unique constraint violation)",
-        field: err.meta?.target
+        message: 'Data sudah ada (Unique constraint violation)',
+        field: err.meta?.target,
       });
     }
+
     if (err.code === 'P2025') {
       return res.status(404).json({
         success: false,
-        message: "Data tidak ditemukan"
+        message: 'Data tidak ditemukan',
       });
     }
   }
 
-  res.status(500).json({ success: false, message: err.message });
+  const statusCode = err.message?.includes('tidak ditemukan') ? 404 : 400;
+
+  return res.status(statusCode).json({
+    success: false,
+    message: err.message || 'Terjadi kesalahan server',
+    ...(NODE_ENV === 'development' && { stack: err.stack }),
+  });
 };

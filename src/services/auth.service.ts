@@ -20,6 +20,7 @@ export const register = async (data: { name: string; email: string; password: st
       role: data.role || 'USER',
     },
   });
+
 };
 
 export const login = async (data: { email: string; password: string }) => {
